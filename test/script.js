@@ -2,7 +2,7 @@
 
 var assert = require('assert')
 var bscript = require('../src/script')
-var minimalData = require('minimaldata')
+var minimalData = require('@psf/minimaldata')
 
 var fixtures = require('./fixtures/script.json')
 var fixtures2 = require('./fixtures/templates.json')
