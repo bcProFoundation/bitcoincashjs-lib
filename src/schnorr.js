@@ -12,26 +12,31 @@ var deterministicGenerateK = require('./rfc6979').deterministicGenerateK
 
 var USE_RFC6979 = true
 function sign(h, x) {
-  typeforce(types.tuple(
-    types.BufferN(32),
-    types.BigInt
-  ), arguments)
+
+  try {
+    typeforce(types.tuple(
+      types.BufferN(32),
+      types.BigInt
+    ), arguments)
+  } catch (error) {
+    console.log(error)
+  }
 
   var n = secp256k1.n
   var G = secp256k1.G
 
-  if(x.compareTo(BigInteger.ZERO) <= 0 || x.compareTo(n) >= 0){
+  if (x.compareTo(BigInteger.ZERO) <= 0 || x.compareTo(n) >= 0) {
     throw new Error('Private key x not in range')
   }
 
   var P = G.multiply(x);
 
   var r, s
-  function signWithK(k){
+  function signWithK(k) {
     var R = G.multiply(k)
 
     // sign chosen so that the Y coordinate of R has Jacobi symbol 1
-    if(jacobi(R.affineY, secp256k1.p) != 1){
+    if (jacobi(R.affineY, secp256k1.p) != 1) {
       k = n.subtract(k)
       R = G.multiply(k)
     }
@@ -49,7 +54,7 @@ function sign(h, x) {
     return true
   }
 
-  if(USE_RFC6979){
+  if (USE_RFC6979) {
     deterministicGenerateK(h, x.toBuffer(32), signWithK, Buffer.from('Schnorr+SHA256  ', 'ascii'))
   } else {
     var kh = crypto.sha256(Buffer.concat([x.toBuffer(32), h]))
@@ -61,7 +66,7 @@ function sign(h, x) {
 }
 
 // https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/2019-05-15-schnorr.md#signature-verification-algorithm
-function verify (h, signature, P) {
+function verify(h, signature, P) {
   typeforce(types.tuple(
     types.BufferN(32),
     types.ECSignature,
@@ -75,14 +80,14 @@ function verify (h, signature, P) {
   var s = signature.s
 
   // 1. Fail if point P is not actually on the curve, or if it is the point at infinity.
-  if(!secp256k1.isOnCurve(P)) return false
-  if(secp256k1.isInfinity(P)) return false
+  if (!secp256k1.isOnCurve(P)) return false
+  if (secp256k1.isInfinity(P)) return false
 
   // 2. Fail if r >= p, where p is the field size used in secp256k1.
-  if(r.compareTo(secp256k1.p) >= 0) return false
+  if (r.compareTo(secp256k1.p) >= 0) return false
 
   // 3. Fail if s >= n, where n is the order of the secp256k1 curve.
-  if(s.compareTo(n) >= 0) return false
+  if (s.compareTo(n) >= 0) return false
 
   // 4. Let BP be the 33-byte encoding of P as a compressed point.
   var BP = toCompressedPoint(P)
@@ -98,23 +103,23 @@ function verify (h, signature, P) {
   var R = G.multiply(s).add(P.multiply(n.subtract(e)))
 
   // 8. Fail if R' is the point at infinity.
-  if(secp256k1.isInfinity(R)) return false
+  if (secp256k1.isInfinity(R)) return false
 
   // 9. Fail if the X coordinate of R' is not equal to r.
-  if(R.affineX.compareTo(r) != 0) return false
+  if (R.affineX.compareTo(r) != 0) return false
 
   // 10. Fail if the Jacobi symbol of the Y coordinate of R' is not 1.
-  if(jacobi(R.affineY, secp256k1.p) != 1) return false
+  if (jacobi(R.affineY, secp256k1.p) != 1) return false
 
   // 11. Otherwise, the signature is valid
   return true
 }
 
-function jacobi(a, p){
+function jacobi(a, p) {
   return a.modPow(p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2)), p).intValue();
 }
 
-function toCompressedPoint(P){
+function toCompressedPoint(P) {
   typeforce(types.tuple(
     types.ECPoint
   ), arguments)
@@ -122,13 +127,13 @@ function toCompressedPoint(P){
   return Buffer.concat([Buffer.from([P.affineY.isEven() ? 0x02 : 0x03]), P.affineX.toBuffer(32)]);
 }
 
-function fromCompressedPoint(buffer){
+function fromCompressedPoint(buffer) {
   typeforce(types.tuple(
     types.BufferN(33)
   ), arguments)
 
-  if(buffer.length !== 33) throw new Error('Invalid length of buffer')
-  if(buffer[0] !== 0x2 && buffer[0] !== 0x3) throw new Error('Invalid signum byte')
+  if (buffer.length !== 33) throw new Error('Invalid length of buffer')
+  if (buffer[0] !== 0x2 && buffer[0] !== 0x3) throw new Error('Invalid signum byte')
 
   var isOdd = buffer[0] === 0x3
   var x = BigInteger.fromBuffer(buffer.slice(1, 33))
@@ -147,7 +152,7 @@ module.exports = {
 
   // TODO: remove
   __curve: secp256k1,
-  __useRFC6979: function(use){
+  __useRFC6979: function (use) {
     USE_RFC6979 = use
   }
 }

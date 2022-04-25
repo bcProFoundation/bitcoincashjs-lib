@@ -4,9 +4,12 @@ var types = require('./types')
 
 var BigInteger = require('bigi')
 
-function ECSignature (r, s) {
-  typeforce(types.tuple(types.BigInt, types.BigInt), arguments)
-
+function ECSignature(r, s) {
+  try {
+    typeforce(types.tuple(types.BigInt, types.BigInt), arguments)
+  } catch (error) {
+    console.log(error)
+  }
   this.r = r
   this.s = s
 }
@@ -81,7 +84,7 @@ ECSignature.prototype.toDER = function () {
 }
 
 ECSignature.prototype.toRSBuffer = function (buffer, offset) {
-  if(!offset) offset = 0
+  if (!offset) offset = 0
   buffer = buffer || Buffer.alloc(64)
   this.r.toBuffer(32).copy(buffer, offset)
   this.s.toBuffer(32).copy(buffer, offset + 32)
@@ -89,7 +92,7 @@ ECSignature.prototype.toRSBuffer = function (buffer, offset) {
 }
 
 ECSignature.prototype.toScriptSignature = function (hashType, signatureAlgorithm) {
-  if(!signatureAlgorithm) signatureAlgorithm = ECSignature.ECDSA
+  if (!signatureAlgorithm) signatureAlgorithm = ECSignature.ECDSA
 
   var hashTypeMod = hashType & ~0xc0
   if (hashTypeMod <= 0 || hashTypeMod >= 4) throw new Error('Invalid hashType ' + hashType)
@@ -97,9 +100,9 @@ ECSignature.prototype.toScriptSignature = function (hashType, signatureAlgorithm
   var hashTypeBuffer = Buffer.alloc(1)
   hashTypeBuffer.writeUInt8(hashType, 0)
 
-  if(signatureAlgorithm === ECSignature.ECDSA){
+  if (signatureAlgorithm === ECSignature.ECDSA) {
     return Buffer.concat([this.toDER(), hashTypeBuffer])
-  } else if(signatureAlgorithm === ECSignature.SCHNORR) {
+  } else if (signatureAlgorithm === ECSignature.SCHNORR) {
     return Buffer.concat([this.toRSBuffer(), hashTypeBuffer])
   } else {
     throw new Error('Invalid signature Algorithm')

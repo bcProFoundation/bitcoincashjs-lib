@@ -11,9 +11,12 @@ var deterministicGenerateK = require('./rfc6979').deterministicGenerateK
 
 var N_OVER_TWO = secp256k1.n.shiftRight(1)
 
-function sign (hash, d) {
-  typeforce(types.tuple(types.Hash256bit, types.BigInt), arguments)
-
+function sign(hash, d) {
+  try {
+    typeforce(types.tuple(types.Hash256bit, types.BigInt), arguments)
+  } catch (error) {
+    console.log(error)
+  }
   var x = d.toBuffer(32)
   var e = BigInteger.fromBuffer(hash)
   var n = secp256k1.n
@@ -42,7 +45,7 @@ function sign (hash, d) {
   return new ECSignature(r, s)
 }
 
-function verify (hash, signature, Q) {
+function verify(hash, signature, Q) {
   typeforce(types.tuple(
     types.Hash256bit,
     types.ECSignature,

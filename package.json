@@ -1,6 +1,6 @@
 {
-  "name": "@psf/bitcoincashjs-lib",
-  "version": "4.0.2",
+  "name": "@bcpros/bitcoincashjs-lib",
+  "version": "1.0.1",
   "description": "Client-side Bitcoin JavaScript library",
   "main": "./src/index.js",
   "engines": {
